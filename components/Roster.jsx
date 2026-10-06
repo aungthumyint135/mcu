@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import * as THREE from "three";
-import { gsap, useGSAP } from "@/lib/gsap";
+import { gsap, ScrollTrigger, useGSAP } from "@/lib/gsap";
 import { createStage } from "@/lib/stage3d";
 import { buildProp } from "@/lib/props3d";
 import { getLenis } from "@/lib/lenis";
@@ -42,7 +42,7 @@ export default function Roster({ heroes, onSelect }) {
       return holder;
     });
     stage.onFrame((t, dt) => {
-      pivot.scale.setScalar(Math.min(1, canvas.current.clientHeight / 640)); // keep tall props inside short canvases
+      pivot.scale.setScalar(gsap.utils.clamp(0.78, 1, canvas.current.clientHeight / 640)); // keep tall props inside short canvases
       ticks.forEach((tick) => tick(t, dt));
       holders.forEach((h, i) => {
         if (!h.visible) return;
@@ -58,44 +58,67 @@ export default function Roster({ heroes, onSelect }) {
     gsap.set(cards.slice(1), { autoAlpha: 0 });
     const rimColor = new THREE.Color();
 
+    // Swap timing (seconds). Out and in overlap so there's never an empty stage.
+    const OUT = 0.6;
+    const IN_AT = 0.32;
+    const IN = 1.15;
+
     let current = 0;
+    let swap = null;
+    const isShown = (el) => getComputedStyle(el).visibility !== "hidden";
+
+    // One interruptible timeline per swap. Every tween animates *from the current state*,
+    // so scrolling quickly or reversing mid-swap blends instead of snapping back to a start pose.
     const show = contextSafe((next) => {
       if (next === current) return;
-      const prev = current;
-      const dir = next > prev ? 1 : -1;
+      const dir = next > current ? 1 : -1;
       current = next;
       setActive(next);
       const hero = heroes[next];
+      swap?.kill();
+      swap = gsap.timeline();
 
-      // 3D: old prop spins away and shrinks, new one spins in from the other side
-      const out = holders[prev];
+      /* 3D: everything else drifts away, the new prop swings in from the other side */
+      holders.forEach((h, i) => {
+        if (i === next || !h.visible) return;
+        swap.to(h.scale, { x: 0.001, y: 0.001, z: 0.001, duration: OUT, ease: "power2.in", onComplete: () => (h.visible = false) }, 0)
+          .to(h.rotation, { y: dir * Math.PI * 0.6, duration: OUT, ease: "power2.in" }, 0)
+          .to(h.position, { x: -dir * 1.4, duration: OUT, ease: "power2.in" }, 0);
+      });
       const inn = holders[next];
-      gsap.killTweensOf([out.scale, out.rotation, out.position, inn.scale, inn.rotation, inn.position]);
-      gsap.to(out.scale, { x: 0.001, y: 0.001, z: 0.001, duration: 0.3, ease: "power3.in", onComplete: () => (out.visible = false) });
-      gsap.to(out.rotation, { y: dir * Math.PI, duration: 0.3, ease: "power3.in" });
-      gsap.to(out.position, { x: -dir * 1.5, duration: 0.3, ease: "power3.in" });
+      if (!inn.visible || inn.scale.x < 0.05) { // fresh entrance; otherwise resume from where it is
+        inn.scale.setScalar(0.001);
+        inn.rotation.y = -dir * Math.PI * 0.8;
+        inn.position.x = dir * 1.4;
+      }
       inn.visible = true;
-      gsap.fromTo(inn.scale, { x: 0.001, y: 0.001, z: 0.001 }, { x: 1, y: 1, z: 1, duration: 0.65, ease: "expo.out", delay: 0.12 });
-      gsap.fromTo(inn.rotation, { y: -dir * Math.PI * 1.5 }, { y: 0, duration: 0.8, ease: "expo.out", delay: 0.12 });
-      gsap.fromTo(inn.position, { x: dir * 1.5 }, { x: 0, duration: 0.65, ease: "expo.out", delay: 0.12 });
+      swap.to(inn.scale, { x: 1, y: 1, z: 1, duration: IN, ease: "power3.out" }, IN_AT)
+        .to(inn.rotation, { y: 0, duration: IN + 0.25, ease: "power3.out" }, IN_AT)
+        .to(inn.position, { x: 0, duration: IN, ease: "power3.out" }, IN_AT);
 
-      // theme colours + rim light
-      gsap.to(root.current, { "--c": hero.color, "--a": hero.accent, duration: 0.6, ease: "power2.out" });
+      /* theme colours + rim light blend across the whole swap */
       rimColor.set(hero.accent);
-      gsap.to(stage.rim.color, { r: rimColor.r, g: rimColor.g, b: rimColor.b, duration: 0.6 });
+      swap.to(root.current, { "--c": hero.color, "--a": hero.accent, duration: OUT + IN * 0.6, ease: "sine.inOut" }, 0)
+        .to(stage.rim.color, { r: rimColor.r, g: rimColor.g, b: rimColor.b, duration: OUT + IN * 0.6, ease: "sine.inOut" }, 0);
 
-      // copy: old block slides out, new block's lines rise in
-      gsap.to(cards[prev], { autoAlpha: 0, y: -40 * dir, duration: 0.22, ease: "power2.in" });
-      gsap.set(cards[next], { autoAlpha: 1, y: 0 });
-      gsap.fromTo(cards[next].querySelector(".hero-name span"),
-        { yPercent: 110 * dir, rotationX: -70 * dir },
-        { yPercent: 0, rotationX: 0, duration: 0.6, ease: "expo.out", delay: 0.1 });
-      gsap.fromTo(cards[next].querySelectorAll(".hero-anim"),
-        { y: 30 * dir, opacity: 0 },
-        { y: 0, opacity: 1, duration: 0.45, ease: "power3.out", stagger: 0.04, delay: 0.15 });
-      gsap.fromTo(cards[next].querySelectorAll(".mini-fill"),
-        { scaleX: 0 },
-        { scaleX: (_, el) => el.dataset.v / 100, duration: 0.7, ease: "expo.out", stagger: 0.05, delay: 0.2 });
+      /* copy: other blocks fade up and out, the new block's lines rise in one after another */
+      cards.forEach((c, i) => {
+        if (i !== next && isShown(c)) swap.to(c, { autoAlpha: 0, y: -24 * dir, duration: OUT * 0.75, ease: "power2.in" }, 0);
+      });
+      const card = cards[next];
+      const name = card.querySelector(".hero-name span");
+      const lines = card.querySelectorAll(".hero-anim");
+      const bars = card.querySelectorAll(".mini-fill");
+      if (!isShown(card)) {
+        gsap.set(card, { autoAlpha: 0, y: 24 * dir });
+        gsap.set(name, { yPercent: 105 * dir, rotationX: -50 * dir });
+        gsap.set(lines, { y: 22 * dir, opacity: 0 });
+        gsap.set(bars, { scaleX: 0 });
+      }
+      swap.to(card, { autoAlpha: 1, y: 0, duration: 0.7, ease: "power2.out" }, IN_AT)
+        .to(name, { yPercent: 0, rotationX: 0, duration: IN, ease: "power3.out" }, IN_AT)
+        .to(lines, { y: 0, opacity: 1, duration: 0.8, ease: "power2.out", stagger: 0.07 }, IN_AT + 0.12)
+        .to(bars, { scaleX: (_, el) => el.dataset.v / 100, duration: IN, ease: "power3.out", stagger: 0.08 }, IN_AT + 0.25);
     });
 
     gsap.set(".mini-fill", { scaleX: (_, el) => el.dataset.v / 100 });
@@ -107,6 +130,18 @@ export default function Roster({ heroes, onSelect }) {
         onUpdate: (self) => show(Math.min(N - 1, Math.floor(self.progress * N))),
       },
     }).to(".roster-progress span", { scaleX: 1, ease: "none" }).scrollTrigger;
+
+    // When scrolling stops inside the section, glide to the centre of the current hero's segment
+    // so the page never rests halfway between two heroes.
+    const settle = () => {
+      const st = trigger.current;
+      const lenis = getLenis();
+      if (!st?.isActive || !lenis || lenis.isStopped) return;
+      const seg = (st.end - st.start) / N;
+      const target = st.start + (current + 0.5) * seg;
+      if (Math.abs(window.scrollY - target) > seg * 0.08) lenis.scrollTo(target, { duration: 0.9, easing: (t) => 1 - Math.pow(1 - t, 3) });
+    };
+    ScrollTrigger.addEventListener("scrollEnd", settle);
 
     gsap.from(".roster-head > *, .hero-card:first-child", {
       y: 60, opacity: 0, duration: 0.7, stagger: 0.08, ease: "expo.out",
@@ -137,6 +172,7 @@ export default function Roster({ heroes, onSelect }) {
 
     return () => {
       disposed = true;
+      ScrollTrigger.removeEventListener("scrollEnd", settle);
       el.removeEventListener("pointermove", onMove);
       cv.removeEventListener("click", onClick);
       io.disconnect();
