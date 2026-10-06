@@ -71,31 +71,31 @@ export default function Roster({ heroes, onSelect }) {
       const out = holders[prev];
       const inn = holders[next];
       gsap.killTweensOf([out.scale, out.rotation, out.position, inn.scale, inn.rotation, inn.position]);
-      gsap.to(out.scale, { x: 0.001, y: 0.001, z: 0.001, duration: 0.5, ease: "power3.in", onComplete: () => (out.visible = false) });
-      gsap.to(out.rotation, { y: dir * Math.PI, duration: 0.5, ease: "power3.in" });
-      gsap.to(out.position, { x: -dir * 1.5, duration: 0.5, ease: "power3.in" });
+      gsap.to(out.scale, { x: 0.001, y: 0.001, z: 0.001, duration: 0.3, ease: "power3.in", onComplete: () => (out.visible = false) });
+      gsap.to(out.rotation, { y: dir * Math.PI, duration: 0.3, ease: "power3.in" });
+      gsap.to(out.position, { x: -dir * 1.5, duration: 0.3, ease: "power3.in" });
       inn.visible = true;
-      gsap.fromTo(inn.scale, { x: 0.001, y: 0.001, z: 0.001 }, { x: 1, y: 1, z: 1, duration: 1.1, ease: "expo.out", delay: 0.3 });
-      gsap.fromTo(inn.rotation, { y: -dir * Math.PI * 1.5 }, { y: 0, duration: 1.4, ease: "expo.out", delay: 0.3 });
-      gsap.fromTo(inn.position, { x: dir * 1.5 }, { x: 0, duration: 1.1, ease: "expo.out", delay: 0.3 });
+      gsap.fromTo(inn.scale, { x: 0.001, y: 0.001, z: 0.001 }, { x: 1, y: 1, z: 1, duration: 0.65, ease: "expo.out", delay: 0.12 });
+      gsap.fromTo(inn.rotation, { y: -dir * Math.PI * 1.5 }, { y: 0, duration: 0.8, ease: "expo.out", delay: 0.12 });
+      gsap.fromTo(inn.position, { x: dir * 1.5 }, { x: 0, duration: 0.65, ease: "expo.out", delay: 0.12 });
 
       // theme colours + rim light
-      gsap.to(root.current, { "--c": hero.color, "--a": hero.accent, duration: 1, ease: "power2.out" });
+      gsap.to(root.current, { "--c": hero.color, "--a": hero.accent, duration: 0.6, ease: "power2.out" });
       rimColor.set(hero.accent);
-      gsap.to(stage.rim.color, { r: rimColor.r, g: rimColor.g, b: rimColor.b, duration: 1 });
+      gsap.to(stage.rim.color, { r: rimColor.r, g: rimColor.g, b: rimColor.b, duration: 0.6 });
 
       // copy: old block slides out, new block's lines rise in
-      gsap.to(cards[prev], { autoAlpha: 0, y: -50 * dir, duration: 0.4, ease: "power2.in" });
+      gsap.to(cards[prev], { autoAlpha: 0, y: -40 * dir, duration: 0.22, ease: "power2.in" });
       gsap.set(cards[next], { autoAlpha: 1, y: 0 });
       gsap.fromTo(cards[next].querySelector(".hero-name span"),
         { yPercent: 110 * dir, rotationX: -70 * dir },
-        { yPercent: 0, rotationX: 0, duration: 1, ease: "expo.out", delay: 0.25 });
+        { yPercent: 0, rotationX: 0, duration: 0.6, ease: "expo.out", delay: 0.1 });
       gsap.fromTo(cards[next].querySelectorAll(".hero-anim"),
         { y: 30 * dir, opacity: 0 },
-        { y: 0, opacity: 1, duration: 0.8, ease: "power3.out", stagger: 0.06, delay: 0.35 });
+        { y: 0, opacity: 1, duration: 0.45, ease: "power3.out", stagger: 0.04, delay: 0.15 });
       gsap.fromTo(cards[next].querySelectorAll(".mini-fill"),
         { scaleX: 0 },
-        { scaleX: (_, el) => el.dataset.v / 100, duration: 1.2, ease: "expo.out", stagger: 0.08, delay: 0.5 });
+        { scaleX: (_, el) => el.dataset.v / 100, duration: 0.7, ease: "expo.out", stagger: 0.05, delay: 0.2 });
     });
 
     gsap.set(".mini-fill", { scaleX: (_, el) => el.dataset.v / 100 });
@@ -109,7 +109,7 @@ export default function Roster({ heroes, onSelect }) {
     }).to(".roster-progress span", { scaleX: 1, ease: "none" }).scrollTrigger;
 
     gsap.from(".roster-head > *, .hero-card:first-child", {
-      y: 60, opacity: 0, duration: 1, stagger: 0.1, ease: "expo.out",
+      y: 60, opacity: 0, duration: 0.7, stagger: 0.08, ease: "expo.out",
       scrollTrigger: { trigger: root.current, start: "top 70%" },
     });
 

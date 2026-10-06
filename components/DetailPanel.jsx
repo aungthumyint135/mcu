@@ -24,7 +24,7 @@ function MovieView({ movie, heroes, onSelect }) {
   const cast = heroes.filter((h) => h.movieIds.includes(movie.id));
   return (
     <>
-      <div className="dp-poster dp-anim"><img src={movie.poster} alt={movie.title} /></div>
+      <div className="dp-poster dp-anim"><img src={movie.posterLarge} alt={movie.title} /></div>
       <p className="eyebrow dp-anim">Phase {movie.phase} · {movie.saga}</p>
       <h2 className="dp-title dp-anim">{movie.title}</h2>
       <Facts items={[
@@ -130,17 +130,17 @@ export default function DetailPanel({ selection, movies, heroes, onSelect, onClo
       isOpen.current = true;
       getLenis()?.stop();
       tl.set(root.current, { autoAlpha: 1 })
-        .fromTo(".dp-overlay", { opacity: 0 }, { opacity: 1, duration: 0.5 })
-        .fromTo(".dp-panel", { xPercent: 100 }, { xPercent: 0, duration: 0.9, ease: "expo.out" }, 0);
+        .fromTo(".dp-overlay", { opacity: 0 }, { opacity: 1, duration: 0.3 })
+        .fromTo(".dp-panel", { xPercent: 100 }, { xPercent: 0, duration: 0.55, ease: "expo.out" }, 0);
     }
-    tl.fromTo(".dp-anim", { y: 40, opacity: 0 }, { y: 0, opacity: 1, duration: 0.7, ease: "power3.out", stagger: 0.05 }, tl.duration() ? 0.25 : 0)
-      .fromTo(".stat-fill", { scaleX: 0 }, { scaleX: (_, el) => el.dataset.v / 100, duration: 1.2, ease: "expo.out", stagger: 0.07 }, "<0.3")
-      .from(".stat-num", { textContent: 0, snap: { textContent: 1 }, duration: 1.2, ease: "expo.out", stagger: 0.07 }, "<");
+    tl.fromTo(".dp-anim", { y: 40, opacity: 0 }, { y: 0, opacity: 1, duration: 0.45, ease: "power3.out", stagger: 0.03 }, tl.duration() ? 0.12 : 0)
+      .fromTo(".stat-fill", { scaleX: 0 }, { scaleX: (_, el) => el.dataset.v / 100, duration: 0.7, ease: "expo.out", stagger: 0.04 }, "<0.15")
+      .from(".stat-num", { textContent: 0, snap: { textContent: 1 }, duration: 0.7, ease: "expo.out", stagger: 0.04 }, "<");
   });
 
   const swapOut = contextSafe((next) => {
     gsap.to(".dp-anim", {
-      y: -20, opacity: 0, duration: 0.25, ease: "power2.in", stagger: 0.015,
+      y: -20, opacity: 0, duration: 0.15, ease: "power2.in", stagger: 0.008,
       onComplete: () => setCurrent(next),
     });
   });
@@ -154,9 +154,9 @@ export default function DetailPanel({ selection, movies, heroes, onSelect, onClo
         getLenis()?.start();
       },
     })
-      .to(".dp-anim", { y: -20, opacity: 0, duration: 0.25, stagger: 0.01 })
-      .to(".dp-panel", { xPercent: 100, duration: 0.6, ease: "expo.in" }, 0.05)
-      .to(".dp-overlay", { opacity: 0, duration: 0.4 }, 0.3);
+      .to(".dp-anim", { y: -20, opacity: 0, duration: 0.15, stagger: 0.006 })
+      .to(".dp-panel", { xPercent: 100, duration: 0.4, ease: "power3.in" }, 0)
+      .to(".dp-overlay", { opacity: 0, duration: 0.25 }, 0.15);
   });
 
   // selection changed from outside -> open, swap or close

@@ -44,14 +44,14 @@ export default function Hero() {
     io.observe(root.current);
 
     /* ---------- intro ---------- */
-    gsap.from(flight.scale, { x: 0.001, y: 0.001, z: 0.001, duration: 1.8, ease: "expo.out", delay: 0.2 });
-    gsap.from(flight.rotation, { z: -Math.PI * 2, duration: 2, ease: "expo.out", delay: 0.2 });
+    gsap.from(flight.scale, { x: 0.001, y: 0.001, z: 0.001, duration: 1.1, ease: "expo.out", delay: 0.1 });
+    gsap.from(flight.rotation, { z: -Math.PI * 2, duration: 1.2, ease: "expo.out", delay: 0.1 });
     // Intro animates the inner span; scroll animates the outer span — they never fight.
     gsap.from(".char-in", {
       yPercent: 110, rotationX: -90, opacity: 0, transformOrigin: "50% 100%",
-      duration: 1.3, ease: "expo.out", stagger: 0.03, delay: 0.5,
+      duration: 0.9, ease: "expo.out", stagger: 0.02, delay: 0.25,
     });
-    gsap.from(".hero-sub, .scroll-hint", { opacity: 0, y: 20, duration: 1, delay: 1.1, stagger: 0.15 });
+    gsap.from(".hero-sub, .scroll-hint", { opacity: 0, y: 20, duration: 0.7, delay: 0.6, stagger: 0.1 });
     gsap.to(".grid-floor", { backgroundPosition: "0px 80px", duration: 1.2, ease: "none", repeat: -1 });
 
     /* ---------- scroll ---------- */

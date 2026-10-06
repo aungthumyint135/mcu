@@ -80,11 +80,11 @@ h2 { font-size: clamp(48px, 7.5vw, 112px); line-height: 0.9; }
 .tunnel-stage { position: absolute; inset: 0; perspective: 1000px; transform-style: preserve-3d; }
 .poster {
   position: absolute; left: 50%; top: 50%; width: clamp(160px, 17vw, 250px);
-  border-radius: 12px; will-change: transform, opacity;
+  border-radius: 12px; will-change: transform;
 }
 .poster img {
-  width: 100%; aspect-ratio: 2 / 3; object-fit: cover; border-radius: 12px;
-  box-shadow: 0 30px 80px -20px rgba(0, 0, 0, 0.8); outline: 2px solid transparent; outline-offset: 4px;
+  width: 100%; height: auto; aspect-ratio: 2 / 3; object-fit: cover; border-radius: 12px;
+  box-shadow: 0 16px 32px -12px rgba(0, 0, 0, 0.8); outline: 2px solid transparent; outline-offset: 4px;
   transition: outline-color 0.25s, filter 0.25s;
 }
 .poster:hover img, .poster:focus-visible img { outline-color: var(--red); filter: brightness(1.12); }
